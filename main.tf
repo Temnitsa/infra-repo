@@ -1,16 +1,20 @@
 terraform {
   required_version = ">= 0.14.0"
   required_providers {
+    # Провайдер для OpenStack (был раньше)
     openstack = {
       source  = "terraform-provider-openstack/openstack"
       version = "~> 1.53.0"
     }
+    # Провайдер для Yandex (добавляем сюда)
+    yandex = {
+      source = "yandex-cloud/yandex"
+    }
   }
 }
 
-# Настройки провайдера (берет доступы из переменных среды OS_*)
+# Далее идет остальной код OpenStack (provider "openstack", resource...)
 provider "openstack" {}
-
 # Создаем сервер
 resource "openstack_compute_instance_v2" "terraform_vm" {
   name            = "Ilia-Terraform-Server"  # Имя сервера
