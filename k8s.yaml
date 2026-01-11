@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lab7-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lab7
+  template:
+    metadata:
+      labels:
+        app: lab7
+    spec:
+      containers:
+      - name: java-app
+        image: temnitsa/lab7-app:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
