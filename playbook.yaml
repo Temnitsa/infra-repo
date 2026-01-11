@@ -1,0 +1,15 @@
+- name: Setup Application Server
+  hosts: all
+  become: yes  # Выполнять от root (sudo)
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Python3 and Postgres
+      apt:
+        name:
+          - python3-pip
+          - postgresql
+          - openjdk-17-jre-headless # Сразу ставим Java для следующей лабы
+        state: present
