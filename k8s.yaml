@@ -15,11 +15,17 @@ spec:
     spec:
       containers:
       - name: bot
-        # ТЕПЕРЬ ОБРАЗ ТВОЙ (мы его собрали в Jenkins)
-        image: temnitsa/lab7-bot:latest
+        # ССЫЛКА НА ЯНДЕКС РЕЕСТР
+        image: cr.yandex/crpjaq4qifipfciciu4r/lab7-bot:latest
         imagePullPolicy: Always
         env:
-        # Передаем токен (убедись, что создал секрет!)
+        # Проверяем переменную токена. В main.py обычно ищут TOKEN или BOT_TOKEN.
+        # Давай передадим обе, чтобы наверняка.
+        - name: TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: mt-bot-secret
+              key: token
         - name: BOT_TOKEN
           valueFrom:
             secretKeyRef:
@@ -31,7 +37,7 @@ spec:
             cpu: "100m"
 
 ---
-# Сервис-заглушка для галочки (LoadBalancer)
+# Сервис для сдачи лабы
 apiVersion: v1
 kind: Service
 metadata:
@@ -45,4 +51,3 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 80
-
