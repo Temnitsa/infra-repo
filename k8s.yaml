@@ -1,17 +1,4 @@
-# --- БАЗА ДАННЫХ (MySQL) ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: mysql-db
-  namespace: ilia-lab7
-spec:
-  ports:
-  - port: 3306
-  selector:
-    app: mysql
-  clusterIP: None
-
----
+# --- ДЕПЛОЙ БАЗЫ ДАННЫХ ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,17 +17,29 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: mysql:5.7 # Стабильная версия для Java приложений
+        image: mariadb:10.3  # <--- МЕНЯЕМ ТУТ (более надежный образ)
         env:
-        - name: MYSQL_DATABASE
-          value: "spring_ecommerce" # Имя базы, которое ждет приложение
         - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        - name: MYSQL_DATABASE
+          value: "spring_ecommerce"
+        # MariaDB понимает старые переменные MYSQL_*, так что остальное можно не трогать
+        - name: MYSQL_USER 
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: username
+        - name: MYSQL_PASSWORD
           valueFrom:
             secretKeyRef:
               name: mysql-pass
               key: password
         ports:
         - containerPort: 3306
+
 
 ---
 # --- ПРИЛОЖЕНИЕ (МАГАЗИН) ---
