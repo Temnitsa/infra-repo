@@ -1,17 +1,78 @@
+# --- БАЗА ДАННЫХ (MySQL) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-db
+  namespace: ilia-lab7
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: petclinic-deployment
+  name: mysql-deployment
+  namespace: ilia-lab7
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - name: mysql
+        image: mysql:5.7 # Стабильная версия для Java приложений
+        env:
+        - name: MYSQL_DATABASE
+          value: "spring_ecommerce" # Имя базы, которое ждет приложение
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        ports:
+        - containerPort: 3306
+
+---
+# --- ПРИЛОЖЕНИЕ (МАГАЗИН) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shop-service
+  namespace: ilia-lab7
+spec:
+  selector:
+    app: shop
+  type: LoadBalancer # Внешний IP
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shop-deployment
   namespace: ilia-lab7
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: petclinic
+      app: shop
   template:
     metadata:
       labels:
-        app: petclinic
+        app: shop
     spec:
       containers:
       - name: web
@@ -19,25 +80,26 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
-        # Даем Джаве чуть больше времени на старт
+        env:
+        # ПЕРЕОПРЕДЕЛЯЕМ НАСТРОЙКИ ПРИЛОЖЕНИЯ
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:mysql://mysql-db:3306/spring_ecommerce?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: username
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-pass
+              key: password
+        # Говорим Hibernate создать таблицы автоматически
+        - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+          value: "update"
         startupProbe:
           httpGet:
-            path: /
+            path: /login # Проверяем страницу логина
             port: 8080
           failureThreshold: 30
           periodSeconds: 10
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: petclinic-service
-  namespace: ilia-lab7
-spec:
-  selector:
-    app: petclinic
-  ports:
-    - protocol: TCP
-      port: 80           # Вход из интернета
-      targetPort: 8080   # Вход в контейнер
-  type: LoadBalancer
