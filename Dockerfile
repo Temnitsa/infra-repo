@@ -1,16 +1,15 @@
-FROM python:3.10-slim
-
-# Ставим системные пакеты (ffmpeg нужен для музыки)
-RUN apt-get update && \
-    apt-get install -y ffmpeg git && \
-    rm -rf /var/lib/apt/lists/*
+# Самый легкий Python (Alpine)
+FROM python:3.10-alpine
 
 WORKDIR /app
 
+# Копируем всё
 COPY . .
 
-# ВМЕСТО requirements.txt ставим библиотеки вручную
-RUN pip install --no-cache-dir pyTelegramBotAPI python-dotenv requests
+# Ставим библиотеки.
+# ffmpeg в Alpine ставится одной командой и весит меньше
+RUN apk add --no-cache ffmpeg git && \
+    pip install --no-cache-dir pyTelegramBotAPI python-dotenv requests
 
-# Запускаем
 CMD ["python", "main.py"]
+
