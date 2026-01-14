@@ -9,10 +9,11 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Качаем ИНТЕРНЕТ-МАГАЗИН
-                git url: 'https://github.com/reljicd/spring-boot-shopping-cart.git', branch: 'master'
+                // 1. Качаем проект Money Transfer
+                // Ветка master (стандарт для старых репо)
+                git url: 'https://github.com/1vmc1/MT.git', branch: 'master'
                 
-                // Качаем инфраструктуру
+                // 2. Качаем твои конфиги
                 dir('infra') {
                     git url: 'https://github.com/Temnitsa/infra-repo', branch: 'main'
                 }
@@ -21,7 +22,8 @@ pipeline {
 
         stage('Build Java') {
             steps {
-                // Собираем (пропуская тесты, так как для них нужна поднятая база)
+                // Собираем JAR
+                // -DskipTests обязательно, так как у нас нет внешней БД для тестов
                 sh 'mvn clean package -DskipTests'
             }
         }
@@ -29,7 +31,9 @@ pipeline {
         stage('Build & Push Docker') {
             steps {
                 script {
+                    // Копируем Dockerfile
                     sh 'cp infra/Dockerfile .'
+                    
                     sh "echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin"
                     sh "docker build -t $IMAGE_NAME:latest ."
                     sh "docker push $IMAGE_NAME:latest"
@@ -40,19 +44,14 @@ pipeline {
         stage('Deploy to Yandex K8s') {
             steps {
                 script {
-                    // Чистим старое (опционально)
-                    sh "kubectl delete deployment petclinic-deployment -n ilia-lab7 || true"
-                    
-                    // Деплоим Магазин и Базу
+                    // Применяем конфиг
                     sh "kubectl apply -f infra/k8s.yaml"
                     
-                    // Перезапускаем Магазин
-                    sh "kubectl rollout restart deployment/shop-deployment -n ilia-lab7 || true"
+                    // Перезапускаем (на случай, если под уже был)
+                    sh "kubectl rollout restart deployment/mt-deployment -n ilia-lab7 || true"
                     
-                    // Ждем MySQL (первый запуск долгий, создаются таблицы)
-                    sh "sleep 45"
-                    sh "kubectl get pods -n ilia-lab7"
-                    sh "kubectl get svc -n ilia-lab7"
+                    // Ждем 20 секунд (приложение легкое)
+                    sh "sleep 20"
                 }
             }
         }
