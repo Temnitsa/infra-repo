@@ -2,32 +2,27 @@ pipeline {
     agent { label 'ilia-label' } 
 
     environment {
-        DOCKER_CREDS = credentials('docker-hub-creds')
-        // ВАЖНО: Пушим в твой репозиторий, имя образа lab7-bot
-        IMAGE_NAME = 'temnitsa/lab7-bot'
+        // ТВОЙ НОВЫЙ РЕЕСТР В ЯНДЕКСЕ
+        IMAGE_NAME = 'cr.yandex/crpjaq4qifipfciciu4r/lab7-bot'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                // 1. Качаем код Бота (Python)
                 git url: 'https://github.com/1vmc1/MT.git', branch: 'master'
-                
-                // 2. Качаем конфиги
                 dir('infra') {
                     git url: 'https://github.com/Temnitsa/infra-repo', branch: 'main'
                 }
             }
         }
 
-        stage('Build & Push Docker') {
+        stage('Build & Push to Yandex') {
             steps {
                 script {
-                    // Копируем Dockerfile из папки infra в корень (к коду бота)
+                    // Копируем Dockerfile
                     sh 'cp infra/Dockerfile .'
                     
-                    // Логин
-                    sh "echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin"
+                    // Логин больше не нужен (работает credential helper)
                     
                     // Сборка и Пуш
                     sh "docker build -t $IMAGE_NAME:latest ."
@@ -39,20 +34,11 @@ pipeline {
         stage('Deploy to Yandex K8s') {
             steps {
                 script {
-                    // Применяем манифесты
                     sh "kubectl apply -f infra/k8s.yaml"
-                    
-                    // Перезапускаем бота
-                    sh "kubectl rollout restart deployment/mt-bot-deployment -n ilia-lab7 || true"
+                    // Удаляем под, чтобы он точно пересоздался и скачал новый образ
+                    sh "kubectl delete pod -l app=mt-bot -n ilia-lab7 || true"
                 }
             }
         }
     }
-    
-    post {
-        always {
-            sh "docker logout || true"
-        }
-    }
 }
-
