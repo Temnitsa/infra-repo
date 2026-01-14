@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: lab7-deployment
-  namespace: ilia-lab7  # <--- ВАЖНО: Твоя личная песочница
+  namespace: ilia-lab7  # Твой namespace
 spec:
   replicas: 1
   selector:
@@ -19,18 +19,18 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
-
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: lab7-loadbalancer
-  namespace: ilia-lab7  # <--- ВАЖНО: Твоя личная песочница
+  namespace: ilia-lab7  # Твой namespace
 spec:
   selector:
-    app: lab7      # Должно совпадать с меткой в Deployment
-  type: LoadBalancer # Yandex выдаст внешний IP
+    app: lab7
+  type: LoadBalancer    # Внешний IP от Яндекса
   ports:
     - protocol: TCP
-      port: 80        # Порт снаружи (в браузере)
-      targetPort: 8080 # Порт твоего приложения внутри
+      port: 80
+      targetPort: 8080
+
