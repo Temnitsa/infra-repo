@@ -13,14 +13,11 @@ spec:
       labels:
         app: mt-bot
     spec:
-      # --- ВОТ ЭТО МЫ ДОБАВЛЯЕМ ---
-      imagePullSecrets:
-      - name: yandex-cr-secret
-      # ---------------------------
+      # Секреты больше не нужны, репо публичный
       containers:
       - name: bot
-        # Твой реестр
-        image: cr.yandex/crpjaq4qifipfciciu4r/lab7-bot:latest
+        # Адрес Docker Hub
+        image: temnitsa/lab7-bot:latest
         imagePullPolicy: Always
         env:
         - name: TOKEN
