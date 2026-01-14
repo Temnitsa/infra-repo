@@ -13,14 +13,16 @@ spec:
       labels:
         app: mt-bot
     spec:
+      # --- ВОТ ЭТО МЫ ДОБАВЛЯЕМ ---
+      imagePullSecrets:
+      - name: yandex-cr-secret
+      # ---------------------------
       containers:
       - name: bot
-        # ССЫЛКА НА ЯНДЕКС РЕЕСТР
+        # Твой реестр
         image: cr.yandex/crpjaq4qifipfciciu4r/lab7-bot:latest
         imagePullPolicy: Always
         env:
-        # Проверяем переменную токена. В main.py обычно ищут TOKEN или BOT_TOKEN.
-        # Давай передадим обе, чтобы наверняка.
         - name: TOKEN
           valueFrom:
             secretKeyRef:
@@ -37,7 +39,6 @@ spec:
             cpu: "100m"
 
 ---
-# Сервис для сдачи лабы
 apiVersion: v1
 kind: Service
 metadata:
