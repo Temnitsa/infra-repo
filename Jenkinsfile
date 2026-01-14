@@ -5,8 +5,8 @@ pipeline {
         // ID твоего реестра
         IMAGE_NAME = 'cr.yandex/crpjaq4qifipfciciu4r/lab7-bot'
         
-        // Твой Токен (я вставил тот, что ты скинул)
-        YC_TOKEN = 't1.9euelZqbm5HJmZzIxo2QlIyeiZiSzO3rnpWay5uam8yKls2SkpGZk5jKkZbl8_cuJGI0-e8BBhgx_t3z925SXzT57wEGGDH-zef1656Vms2OxpaQxoqRk8nHx8qUnc3N.IjYADZnUqW4m4ub6GElOaU94YWcKY2KcB3MJqawOg5xKLzskJXI7mgFYDZWBcB1IMN4cKCYo-uEH6PosRXL9CA' 
+        // Добавляем папку с yc и docker-credential-yc в путь
+        PATH = "/home/ubuntu/yandex-cloud/bin:$PATH"
     }
 
     stages {
@@ -24,8 +24,9 @@ pipeline {
                 script {
                     sh 'cp infra/Dockerfile .'
                     
-                    // Логинимся с твоим токеном
-                    sh "echo $YC_TOKEN | docker login --username oauth --password-stdin cr.yandex"
+                    // Теперь docker login не нужен!
+                    // Jenkins найдет программу-помощник и сам возьмет нужные ключи.
+                    // (Мы используем тот же механизм, что ты настроил через configure-docker)
                     
                     sh "docker build -t $IMAGE_NAME:latest ."
                     sh "docker push $IMAGE_NAME:latest"
@@ -37,7 +38,7 @@ pipeline {
             steps {
                 script {
                     sh "kubectl apply -f infra/k8s.yaml"
-                    // Удаляем под, чтобы он перезапустился с новым образом
+                    // Перезапускаем под
                     sh "kubectl delete pod -l app=mt-bot -n ilia-lab7 || true"
                 }
             }
