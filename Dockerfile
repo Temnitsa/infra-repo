@@ -1,5 +1,12 @@
 FROM eclipse-temurin:17-jre-alpine
+
 WORKDIR /app
-COPY target/my-app-1.0-SNAPSHOT.jar app.jar
-# ENTRYPOINT ["java", "-jar", "app.jar"]
-ENTRYPOINT ["sh", "-c", "java -jar app.jar && sleep infinity"]
+
+# Копируем любой jar файл из папки target
+COPY target/*.jar app.jar
+
+# PetClinic работает на порту 8080
+EXPOSE 8080
+
+# Запускаем
+ENTRYPOINT ["java", "-jar", "app.jar"]
