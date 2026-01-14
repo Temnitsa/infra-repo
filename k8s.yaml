@@ -16,7 +16,7 @@ spec:
       containers:
       - name: bot
         # Тот самый образ, который ты нашел
-        image: 1vmc1/music-app:latest 
+        image: temnitsa/lab7-bot:latest 
         imagePullPolicy: Always
         env:
         # Передаем токен боту. 
