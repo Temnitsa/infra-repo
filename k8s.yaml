@@ -1,42 +1,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mt-deployment
+  name: mt-bot-deployment
   namespace: ilia-lab7
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mt-app
+      app: mt-bot
   template:
     metadata:
       labels:
-        app: mt-app
+        app: mt-bot
     spec:
       containers:
-      - name: java-app
-        image: temnitsa/lab7-app:latest
+      - name: bot
+        # Тот самый образ, который ты нашел
+        image: 1vmc1/music-app:latest 
         imagePullPolicy: Always
-        ports:
-        - containerPort: 8080 # Стандартный порт
-        # Простая проверка, жив ли контейнер
-        startupProbe:
-          tcpSocket:
-            port: 8080
-          failureThreshold: 30
-          periodSeconds: 5
+        env:
+        # Передаем токен боту. 
+        # Обычно переменная называется TOKEN или TELEGRAM_TOKEN.
+        # Попробуем самое популярное название.
+        - name: TOKEN 
+          valueFrom:
+            secretKeyRef:
+              name: mt-bot-secret
+              key: token
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
 
 ---
+# Сервис нужен только для галочки (сдачи лабы), 
+# так как боты не отвечают на HTTP запросы из браузера.
 apiVersion: v1
 kind: Service
 metadata:
-  name: mt-service
+  name: mt-bot-service
   namespace: ilia-lab7
 spec:
   selector:
-    app: mt-app
-  type: LoadBalancer # Дайте внешний IP!
+    app: mt-bot
+  type: LoadBalancer
   ports:
     - protocol: TCP
-      port: 80         # Входной порт (браузер)
-      targetPort: 8080 # Порт контейнера
+      port: 80
+      targetPort: 80 # Просто заглушка
