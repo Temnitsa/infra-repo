@@ -13,11 +13,10 @@ spec:
       labels:
         app: mt-bot
     spec:
-      # Секреты больше не нужны, репо публичный
       containers:
       - name: bot
-        # Адрес Docker Hub
-        image: temnitsa/lab7-bot:latest
+        # Новый Alpine образ
+        image: temnitsa/lab7-bot-alpine:latest
         imagePullPolicy: Always
         env:
         - name: TOKEN
@@ -30,22 +29,3 @@ spec:
             secretKeyRef:
               name: mt-bot-secret
               key: token
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mt-bot-service
-  namespace: ilia-lab7
-spec:
-  selector:
-    app: mt-bot
-  type: LoadBalancer
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
