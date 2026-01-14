@@ -9,10 +9,10 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // 1. Ссылка на официальный репозиторий PetClinic
-                git url: 'https://github.com/spring-projects/spring-petclinic.git', branch: 'main'
+                // Качаем ИНТЕРНЕТ-МАГАЗИН
+                git url: 'https://github.com/reljicd/spring-boot-shopping-cart.git', branch: 'master'
                 
-                // 2. Ваши конфиги
+                // Качаем инфраструктуру
                 dir('infra') {
                     git url: 'https://github.com/Temnitsa/infra-repo', branch: 'main'
                 }
@@ -21,8 +21,7 @@ pipeline {
 
         stage('Build Java') {
             steps {
-                // Собираем (без тестов, чтобы быстрее)
-                // Заметьте: мы убрали блок dir('complete'), так как код в корне
+                // Собираем (пропуская тесты, так как для них нужна поднятая база)
                 sh 'mvn clean package -DskipTests'
             }
         }
@@ -30,9 +29,7 @@ pipeline {
         stage('Build & Push Docker') {
             steps {
                 script {
-                    // Копируем Dockerfile из infra в корень (где лежит target)
                     sh 'cp infra/Dockerfile .'
-                    
                     sh "echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin"
                     sh "docker build -t $IMAGE_NAME:latest ."
                     sh "docker push $IMAGE_NAME:latest"
@@ -43,13 +40,17 @@ pipeline {
         stage('Deploy to Yandex K8s') {
             steps {
                 script {
+                    // Чистим старое (опционально)
+                    sh "kubectl delete deployment petclinic-deployment -n ilia-lab7 || true"
+                    
+                    // Деплоим Магазин и Базу
                     sh "kubectl apply -f infra/k8s.yaml"
                     
-                    // Перезапускаем деплоймент petclinic
-                    sh "kubectl rollout restart deployment/petclinic-deployment -n ilia-lab7 || true"
+                    // Перезапускаем Магазин
+                    sh "kubectl rollout restart deployment/shop-deployment -n ilia-lab7 || true"
                     
-                    // Ждем подольше (PetClinic тяжелый, стартует секунд 30-40)
-                    sh "sleep 40"
+                    // Ждем MySQL (первый запуск долгий, создаются таблицы)
+                    sh "sleep 45"
                     sh "kubectl get pods -n ilia-lab7"
                     sh "kubectl get svc -n ilia-lab7"
                 }
