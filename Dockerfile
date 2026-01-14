@@ -1,17 +1,21 @@
 # Используем Python
 FROM python:3.10-slim
 
+# Устанавливаем системные зависимости (ffmpeg нужен для работы с аудио)
+RUN apt-get update && \
+    apt-get install -y ffmpeg git && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 
-# Копируем файлы проекта (они появятся после git clone)
+# Копируем файлы проекта
 COPY . .
 
-# Устанавливаем зависимости
-# В репозитории MT есть requirements.txt? 
-# Если нет, ставим вручную то, что обычно нужно ботам
-RUN pip install --no-cache-dir pyTelegramBotAPI python-dotenv requests
+# Устанавливаем зависимости Python
+# Если requirements.txt нет, команда не упадет, а просто выведет ошибку (исправим если что)
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Запускаем бота. 
-# В репозитории главный файл называется bot.py или main.py?
-# Обычно это bot.py
-CMD ["python", "bot.py"]
+# Команда запуска. 
+# В 90% случаев главный файл называется main.py. 
+# Если бот упадет с ошибкой "File not found", поменяем на bot.py
+CMD ["python", "main.py"]
