@@ -2,11 +2,10 @@ pipeline {
     agent { label 'ilia-label' } 
 
     environment {
-        // ID твоего реестра
-        IMAGE_NAME = 'cr.yandex/crpjaq4qifipfciciu4r/lab7-bot'
-        
-        // Добавляем папку с yc и docker-credential-yc в путь
-        PATH = "/home/ubuntu/yandex-cloud/bin:$PATH"
+        // Вернулись на Docker Hub
+        IMAGE_NAME = 'temnitsa/lab7-bot'
+        // Берем пароль от Docker Hub из Jenkins Credentials
+        DOCKER_CREDS = credentials('docker-hub-creds')
     }
 
     stages {
@@ -19,14 +18,13 @@ pipeline {
             }
         }
 
-        stage('Build & Push to Yandex') {
+        stage('Build & Push to DockerHub') {
             steps {
                 script {
                     sh 'cp infra/Dockerfile .'
                     
-                    // Теперь docker login не нужен!
-                    // Jenkins найдет программу-помощник и сам возьмет нужные ключи.
-                    // (Мы используем тот же механизм, что ты настроил через configure-docker)
+                    // Логинимся в Docker Hub
+                    sh "echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin"
                     
                     sh "docker build -t $IMAGE_NAME:latest ."
                     sh "docker push $IMAGE_NAME:latest"
@@ -38,7 +36,7 @@ pipeline {
             steps {
                 script {
                     sh "kubectl apply -f infra/k8s.yaml"
-                    // Перезапускаем под
+                    // Удаляем под
                     sh "kubectl delete pod -l app=mt-bot -n ilia-lab7 || true"
                 }
             }
